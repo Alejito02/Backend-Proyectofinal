@@ -1,3 +1,0 @@
-
-const numero = 2 
- 
