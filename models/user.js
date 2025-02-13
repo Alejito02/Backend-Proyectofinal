@@ -1,1 +1,3 @@
-const t =123;
+
+const numero = 2 
+ 
