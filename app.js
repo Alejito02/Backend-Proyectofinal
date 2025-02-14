@@ -2,8 +2,14 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
+import users from './routes/users.js'
+
 const app= express();
-dotenv.config();
+app.use(express.json());
+app.use("/api/users/",users)
+dotenv.config()
+
+
 
 app.listen(process.env.PORT,()=>{
     console.log("Escuchando en el puerto"+ process.env.PORT);
