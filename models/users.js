@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-const uno = 6;
-const dos = 7;
-=======
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
@@ -15,4 +11,3 @@ const userSchema = new mongoose.Schema({
 
 const usersModel = mongoose.model("users",userSchema);
 export default usersModel;
->>>>>>> 369de8d (primer endpoint)
