@@ -3,10 +3,12 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 import users from './routes/users.js'
+import categorias from './routes/categories.js'
 
 const app= express();
 app.use(express.json());
 app.use("/api/users/",users)
+app.use("/api/categories/", categorias)
 dotenv.config()
 
 
