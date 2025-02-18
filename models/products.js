@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
 const productsSchema = new mongoose.Schema({
-    name:{type:String, require:true},
-    description:{type:String, require:true},
-    price:{type:Number, require:true},
-    categoryId:{type:mongoose.Schema.ObjectId, require:true, ref:"categories"},
-    supplierId:{type:mongoose.Schema.ObjectId, require:true, ref:"suppliers"},
-    stock:{type:Number, require:true},
-    user:{type:mongoose.Schema.ObjectId, require:true , ref:"users"}
+    name:{type:String, required:true},
+    description:{type:String, required:true},
+    price:{type:Number, required:true},
+    categoryId:{type:mongoose.Schema.ObjectId, required:true, ref:"categories"},
+    supplierId:{type:mongoose.Schema.ObjectId, required:true, ref:"suppliers"},
+    stock:{type:Number, required:true},
+    user:{type:mongoose.Schema.ObjectId, required:true , ref:"users"}
 },{
     timestamps:true
 })

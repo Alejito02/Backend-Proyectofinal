@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    name:{type: String, require:true},
-    email:{type:String, require:true},
-    role:{type: String, require:true}, // cliente  vendedor  admin
-    password:{type:String, require:true}
+    name:{type: String, required:true},
+    email:{type:String, required:true},
+    role:{type: String, required:true}, // cliente  vendedor  admin
+    password:{type:String, required:true}
 },{
     timestamps:true
 });
