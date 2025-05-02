@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
-    userId:{type:Number,required:true},
+    userId:{type:mongoose.Schema.Types.ObjectId, required:true, ref:'users'},
     products:[
         {
             productid : {type:mongoose.Schema.Types.ObjectId,ref:'products',required:true},
