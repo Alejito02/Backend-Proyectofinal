@@ -6,7 +6,6 @@ import {postUsers, putUser, getUsers, putState, getUser} from '../controllers/us
 //record user
 router.post("/",postUsers);
 
-
 //update user
 router.put("/:id",putUser)
 

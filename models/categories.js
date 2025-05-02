@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 const categoriesSchema = new mongoose.Schema({
-    name:{type:String, required:true},
+    name:{type:String, trim:true, required:true},
     description:{type:String, required:true},
-    createdAt:{type:Date, required:true, default:1},
+    state: { type: Number, enum: [0, 1], default: 1 } // 0: inactivo, 1: activo
 },{
     timestamps:true
 });

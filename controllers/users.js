@@ -1,84 +1,162 @@
-import usersModel from "../models/users.js";
+import mongoose from "mongoose";
+import {usersModel} from "../models/users.js";
 
-const postUsers = async (req,res) =>{
-try {
-    const {name, email, role, password ,state} = req.body;
-    const user =  new usersModel({
-        name,
-        email,
-        role,
-        password,
-        state
-    });
-    await user.save();
-    res.json({user})
-} catch (error) {
-    res.status(400).json({error:"the user registration has failed"})
-    console.log(error);
-}
-}
+const postUsers = async (req, res) => {
+    const { data } = req.body;
 
-const putUser = async(req,res)=>{
-    const {id} = req.params
     try {
-        const {name, email, role, password} = req.body
-        const user = await usersModel.findByIdAndUpdate(id,{
-            name,
-            email,
-            role,
-            password
-        },{new:true})
-        res.json({user})
+        if (!data || typeof data !== "object") {
+            console.warn("[POST /users] Invalid user data format", { data });
+            return res.status(400).json({
+                success: false,
+                error: "User data must be a valid object"
+            });
+        }
+
+        const user = new usersModel(data);
+        await user.save();
+
+        const userResponse = user.toObject();
+        delete userResponse.password;
+        delete userResponse.__v;
+
+        return res.status(201).json({
+            success: true,
+            user: userResponse,
+        });
     } catch (error) {
-        res.status(400).json({error:"user update has failed"})
-        console.log(error);
-        console.log(id);
+        console.error("[POST /users] User creation failed:", {
+            error: error.message,
+            stack: error.stack,
+        });
+
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                success: false,
+                error: "Validation error",
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+        });
     }
-}
+};
 
+const putUser = async (req, res) => {
+    const { id } = req.params;
+    const { data } = req.body;
 
-
-const getUsers = async(req,res)=>{
     try {
-        const users = await usersModel.find()
-        res.json({users});
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        if (!data || typeof data !== "object") {
+            console.warn(`[PUT /users] Invalid update data. User ID: ${id}`);
+            return res.status(400).json({
+                success: false,
+                error: "Invalid update data format",
+            });
+        }
+
+        const updatedUser = await usersModel.findByIdAndUpdate(
+            id,
+            { $set: data },
+            {
+                new: true,
+                runValidators: true,
+                select: "-password -__v",
+                lean: true,
+            }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.json({ user: updatedUser });
     } catch (error) {
-        res.status(400).json({error:"the operations fails"})
-        console.log(error);
+        console.error("Update error:", {
+            message: error.message,
+            stack: error.stack,
+        });
+        return res.status(400).json({ error: "Update failed" });
     }
-}
+};
 
-
-const getUser = async (req,res)=>{
+const getUsers = async (req, res) => {
     try {
-        const {id} = req.params
+        const users = await usersModel.find().select("-password -__v");
+
+        if (users.length === 0) {
+            console.warn("[GET /users] No users found");
+            return res.status(200).json({ users: [] });
+        }
+
+        return res.status(200).json({
+            success: true,
+            count: users.length,
+            users,
+        });
+    } catch (error) {
+        console.error("[GET /users] Critical error:", {
+            message: error.message,
+            stack: error.stack,
+        });
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+        });
+    }
+};
+
+const getUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            console.warn(`[GET user] invalid id format : ${id}`);
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        const user = await usersModel.findById(id).select('-password');
+        if (!user) {
+            console.warn(`[GET user] User with ID: ${id} not found`);
+            return res.status(404).json({ error: "User not found" });
+        }
+        return res.status(200).json({ user });
+    } catch (error) {
+        console.error(`[GET user] Critical error : ${error.message}`, error.stack);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+const putState = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            console.warn(`[PUT State] Invalid ID format: ${id}`);
+            return res.status(400).json({ error: "invalid ID format" });
+        }
         const user = await usersModel.findById(id);
-        if(!user){
-            throw new Error("User not found")
+        if (!user) {
+            console.warn(`[PUT State] User not found. ID: ${id}`);
+            return res.status(404).json({ error: "User not found" });
         }
-        res.json({user})
+        const newState = user.state === 1 ? 0 : 1;
+        user.state = newState;
+        await user.save();
+
+        return res.status(200).json({
+            message: "User state updated",
+            user: {
+                _id: user._id,
+                state: newState,
+            },
+        });
     } catch (error) {
-        res.status(404).json({error:error.message})
+        console.error("Error in putState:", error);
+        return res.status(500).json({ error: "Internal server error" });
     }
-}
+};
 
-
-const putState = async (req,res)=>{
-    try {
-        const {id}= req.params
-        const User = await usersModel.findById(id)
-        if(User.state == 1){
-            const user = await usersModel.findByIdAndUpdate(id,{state:0},{new:true});
-            res.json({user})
-        }else{
-            const user = await usersModel.findByIdAndUpdate(id,{state:1},{new:true});
-            res.json({user})
-        }
-    } catch (error) {
-        res.status(404).json({error:"the operations fails"})
-    }
-}
-
-
-
-export {postUsers, putUser, getUsers ,getUser ,putState};
+export { postUsers, putUser, getUsers, getUser, putState };
