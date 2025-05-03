@@ -2,22 +2,25 @@ import express from 'express'
 import { postInventory, putInventory, getInventoryByType, getAllInventory } from '../controllers/inventory.js';
 import { inventoryValidations } from '../middlewares/validations.js';
 import { validateFields } from '../middlewares/validateFields.js';
+import { validateToken } from '../middlewares/validateToken.js';
 const router = express.Router()
 
 
-router.post('/movements',[
+router.post('/',[
+    validateToken,
     inventoryValidations,
     validateFields
 ],postInventory);
 
-router.put('/movements/:id',[
-    inventoryValidations,
-    validateFields
+router.put('/:id',[
+    validateToken,
 ], putInventory);
 
-router.get('/movements', getInventoryByType)
+router.get('/movements',[
+    validateToken
+], getInventoryByType)
 
-router.get('/movements' , getAllInventory)
+router.get('/' , getAllInventory)
 
 
 
