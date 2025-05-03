@@ -1,5 +1,76 @@
 import mongoose from "mongoose";
 import {usersModel} from "../models/users.js";
+import bcrypt from 'bcrypt';
+import { generateJwt } from "../middlewares/validateToken.js";
+
+
+
+
+const login = async (req, res) => {
+    const { user, password } = req.body;
+
+    try {
+        if (!user || !password) {
+            console.warn("[POST /login] Incorrect credentials", { attempt: req.body });
+            return res.status(400).json({
+                success: false,
+                error: "User and password are required",
+            });
+        }
+
+        const userDb = await usersModel.findOne({ user }).select('+password');
+        if (!userDb) {
+            console.warn(`[POST /login] Login attempt with non -existent user: ${user}`);
+            return res.status(401).json({ 
+                success: false,
+                error: "Invalid credentials", 
+            });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, userDb.password);
+        if (!isValidPassword) {
+            console.warn(`[POST /login] Login attempt with incorrect password for user: ${user}`);
+            return res.status(401).json({
+                success: false,
+                error: "Invalid credentials",
+            });
+        }
+
+        const token = generateJwt(userDb._id);
+
+        console.info(`Successful login for the user: ${user}`, { 
+            role: userDb.role,
+            action: "login" 
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                token,
+                user: {
+                    _id: userDb._id,
+                    name: userDb.name,
+                    role: userDb.role,
+                },
+            },
+        });
+
+    } catch (error) {
+        console.error("[POST /login] Error in login process", {
+            error: error.message,
+            stack: error.stack,
+        });
+
+        res.status(500).json({
+            success: false,
+            error: "Authentication failed",
+        });
+    }
+};
+
+
+
+
 
 const postUsers = async (req, res) => {
     const { data } = req.body;
@@ -13,13 +84,13 @@ const postUsers = async (req, res) => {
             });
         }
 
+        const encryptedPassword = await bcrypt.hash(data.password , 10);
         const user = new usersModel(data);
+        user.password = encryptedPassword
         await user.save();
 
         const userResponse = user.toObject();
-        delete userResponse.password;
-        delete userResponse.__v;
-
+        delete userResponse.password
         return res.status(201).json({
             success: true,
             user: userResponse,
@@ -43,6 +114,7 @@ const postUsers = async (req, res) => {
         });
     }
 };
+
 
 const putUser = async (req, res) => {
     const { id } = req.params;
@@ -159,4 +231,4 @@ const putState = async (req, res) => {
     }
 };
 
-export { postUsers, putUser, getUsers, getUser, putState };
+export {login, postUsers, putUser, getUsers, getUser, putState };

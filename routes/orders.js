@@ -3,22 +3,29 @@ const router = expres.Router();
 import { postOrders, putOrders, getOrderById, getAllOrders, putState} from "../controllers/orders.js";
 import { orderValidations } from '../middlewares/validations.js';
 import { validateFields } from '../middlewares/validateFields.js';
+import { validateToken } from '../middlewares/validateToken.js';
 
 
 router.post ("/",[
+    validateToken,
     orderValidations,
     validateFields
 ], postOrders);
 
 router.put("/:id",[
-    orderValidations,
-    validateFields
+    validateToken,
 ], putOrders);
 
-router.get("/:id", getOrderById);
+router.get("/:id",[
+    validateToken
+], getOrderById);
 
-router.get("/", getAllOrders);
+router.get("/",[
+    validateToken
+], getAllOrders);
 
-router.put('/state/:id', putState)
+router.put('/state/:id',[
+    validateToken
+], putState)
 
 export default router
