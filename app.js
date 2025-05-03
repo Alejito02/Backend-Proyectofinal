@@ -7,6 +7,7 @@ import categoriesRouter from "./routes/categories.js";
 import inventoryRouter from "./routes/inventory.js"
 import productRouter from './routes/product.js'
 import ordersRouter from './routes/orders.js'
+import emailRouter from './routes/sendEmail.js'
 
 dotenv.config();
 const app = express();
@@ -16,7 +17,8 @@ app.use("/api/users", usersRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/inventory", inventoryRouter);
 app.use("/api/product", productRouter);
-app.use("/api/orders", ordersRouter)
+app.use("/api/orders", ordersRouter);
+app.use("/api/email", emailRouter);
 
 const startServer = async () => {
     try {
