@@ -4,13 +4,18 @@ import { postProduct, putProduct, getProductById, getAllProducts, putState } fro
 import { validateFields } from '../middlewares/validateFields.js';
 import { productValidations } from '../middlewares/validations.js';
 import { validateToken } from "../middlewares/validateToken.js";
+import { storage } from '../services/cloudinary.js';
+import multer from 'multer';
+import { parseFormData } from '../middlewares/parseFormData.js';
 
-
+const upload = multer({storage})
 
 router.post('/',[
     validateToken,
+    upload.array('images',10),
+    parseFormData,
     productValidations,
-    validateFields
+    validateFields,
 ], postProduct)
 
 router.put('/:id',[
@@ -22,7 +27,6 @@ router.get('/:id',[
 ], getProductById);
 
 router.get('/',[
-    validateToken
 ], getAllProducts);
 
 router.put('/state/:id',[

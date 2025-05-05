@@ -123,9 +123,9 @@ export const userValidations = [
         .notEmpty()
         .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
 
-    check('data.role', 'El rol es obligatorio')
+/*     check('data.role', 'El rol es obligatorio')
         .notEmpty()
-        .isIn([0, 1]).withMessage('El rol debe ser 0 (admin) o 1 (usuario)'),
+        .isIn([0, 1]).withMessage('El rol debe ser 0 (admin) o 1 (usuario)'), */
 
     check('data.state')
         .optional()
