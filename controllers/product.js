@@ -4,6 +4,19 @@ import mongoose from "mongoose";
 const postProduct = async (req, res) => {
     try {
         const {data} = req.body;
+        const images = req.files
+
+        if(!images){
+            return res.status(400).json({ message: 'No image uploaded' });
+        }
+
+        data.images = []
+        for(const element of images){
+            data.images.push({
+                urlImage: element.path,
+                publicId:element.filename
+            }) 
+        }
 
         if (!data || typeof data !== "object") {
             console.warn("[POST /product] invalid inventory data format", { data });

@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv"; 
+import cors from 'cors'
 
 import usersRouter from "./routes/users.js";
 import categoriesRouter from "./routes/categories.js";
@@ -13,6 +14,7 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 app.use("/api/users", usersRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/inventory", inventoryRouter);
