@@ -1,7 +1,7 @@
 import { check } from "express-validator";
 
 export const categoryValidations = [
-    check("data.name", "El nombre es obligatorio")
+    /* check("data.name", "El nombre es obligatorio")
         .notEmpty()
         .trim()
         .isLength({ min: 2, max: 50 })
@@ -15,7 +15,7 @@ export const categoryValidations = [
         .isLength({ max: 500 })
         .withMessage("La descripción no puede exceder los 500 caracteres")
         .custom((value) => !/<script>|<\/script>|http:|https:/.test(value))
-        .withMessage("La descripción contiene contenido no permitido")
+        .withMessage("La descripción contiene contenido no permitido") */
 ];
 
 
@@ -82,31 +82,37 @@ export const orderValidations = [
 
 
 export const productValidations = [
-    check('data.name', 'El nombre es obligatorio')
+    check('data.name', 'Name is required')
         .notEmpty(),
 
-    check('data.description', 'La descripción es obligatoria')
+    check('data.description', 'Description is required')
         .notEmpty(),
 
-    check('data.price', 'El precio es obligatorio')
-        .notEmpty()
-        .isNumeric().withMessage('El precio debe ser un número'),
+    check('data.brand', 'Brand is required')
+        .notEmpty(),
 
-    check('data.categoryId', 'El ID de la categoría es obligatorio')
+    check('data.acceptReturns', 'The acceptReturns field is required')
+        .notEmpty(),
+        
+    check('data.price', 'Price is required')
         .notEmpty()
-        .isMongoId().withMessage('ID de categoría inválido'),
+        .isNumeric().withMessage('Price must be a number'),
 
-    check('data.stock', 'El stock es obligatorio')
+    check('data.categoryId', 'Category ID is required')
         .notEmpty()
-        .isInt({ min: 0 }).withMessage('El stock debe ser un número entero no negativo'),
+        .isMongoId().withMessage('Invalid category ID'),
 
-    check('data.user', 'El ID del usuario es obligatorio')
+    check('data.stock', 'Stock is required')
         .notEmpty()
-        .isMongoId().withMessage('ID de usuario inválido'),
+        .isInt({ min: 0 }).withMessage('Stock must be a non-negative integer'),
+
+/*     check('data.user', 'User ID is required')
+        .notEmpty()
+        .isMongoId().withMessage('Invalid user ID'), */
 
     check('data.state')
         .optional()
-        .isIn([0, 1]).withMessage('El estado debe ser 0 (inactivo) o 1 (activo)')
+        .isIn([0, 1]).withMessage('State must be 0 (inactive) or 1 (active)')
 ];
 
 

@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema({
     ],
     total:{type:Number,required:true},
     status:{type:String,required:true,enum: ['pending','paid','canceled'], default:'pending'},
-    state: { type: Number, enum: [0, 1], default: 1 } // 0: inactivo, 1: activo
+    state: { type: Number, enum: [0, 1], default:    1 } // 0: inactivo, 1: activo
 },{
     timestamps:true
 })
