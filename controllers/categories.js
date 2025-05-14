@@ -37,9 +37,17 @@ const postCategories = async (req, res) => {
         });
     } catch (error) {
         console.error("[POST /categories] categories creation failed", {
+            name:error.name,
             error: error.message,
             stack: error.stack,
         });
+
+        if(error.name === 'MongoServerError'){
+            return res.status(400).json({
+                success:false,
+                error:'Duplicate key'
+            })
+        }
 
         if (error.name === "ValidationError") {
             return res.status(400).json({

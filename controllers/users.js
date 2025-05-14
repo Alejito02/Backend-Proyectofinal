@@ -18,7 +18,8 @@ const login = async (req, res) => {
             });
         }
 
-        const userDb = await usersModel.findOne({ user }).select('+password');
+        const userDb = await usersModel.findOne({ email:user}).select('+password');
+        console.log(userDb);
         if (!userDb) {
             console.warn(`[POST /login] Login attempt with non -existent user: ${user}`);
             return res.status(401).json({ 
@@ -29,7 +30,7 @@ const login = async (req, res) => {
 
         const isValidPassword = await bcrypt.compare(password, userDb.password);
         if (!isValidPassword) {
-            console.warn(`[POST /login] Login attempt with incorrect password for user: ${user}`);
+            console.log(`[POST /login] Login attempt with incorrect password for user: ${password}`);
             return res.status(401).json({
                 success: false,
                 error: "Invalid credentials",

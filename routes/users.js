@@ -6,7 +6,7 @@ import { validateFields } from "../middlewares/validateFields.js";
 import { validateToken } from "../middlewares/validateToken.js";
 
 
-router.post("/login", login)
+router.post("/login",login)
 
 router.post("/",[
     userValidations,
