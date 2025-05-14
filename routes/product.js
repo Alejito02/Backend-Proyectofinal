@@ -26,9 +26,7 @@ router.get('/:id',[
     validateToken
 ], getProductById);
 
-router.get('/',[
-    validateToken
-], getAllProducts);
+router.get('/', getAllProducts);
 
 router.put('/state/:id',[
     validateToken
