@@ -17,14 +17,8 @@ const productsSchema = new mongoose.Schema({
             message:{type:String,}
         }
     ],
-    brand:{type:String, required:true},
-    details:[
-        {
-            name:{type:String},
-            value:{type:String}
-        }
-    ],
-    acceptReturns:{type:String, enum:['si','no'], required:true},
+    details:{type:Object},
+    acceptReturns:{type:String, enum:['Si','No'], required:true},
     averageRating:{type:Number, default: 3},
     categoryId: { type: mongoose.Schema.ObjectId, required: true, ref: "categories" },
     stock: { type: Number, required: true },

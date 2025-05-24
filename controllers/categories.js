@@ -13,19 +13,7 @@ const postCategories = async (req, res) => {
             });
         }
 
-        if(data.idCategoryFather){
-            const categoryFather = await categoriesModel.findById(data.idCategoryFather).lean();
-            if(categoryFather){
-                data.level = categoryFather.level + 1
-            }
-            else {
-                console.warn("[POST /categories] Father category is not found" , {categoryFather});
-                return res.status(400).json({
-                    success: false,
-                    error: "Father category is not found",
-                });
-            }
-        }
+
 
         const categories = new categoriesModel(data);
         await categories.save();
@@ -206,6 +194,7 @@ const putState = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 
 
