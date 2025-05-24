@@ -332,4 +332,84 @@ const addReviewToProduct = async (req, res) => {
     }
 };
 
-export { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct }
+
+
+const productSearch = async (req, res) => {
+    try {
+        const {
+            search,
+            categoryId,
+            min_price,
+            max_price,
+            sort_by,
+            in_stock,
+        } = req.query;
+
+        let query = {};
+
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        if (categoryId) {
+            query.categoryId = categoryId;
+        }
+
+        if (min_price || max_price) {
+            query.price = {};
+            if (min_price) {
+                query.price.$gte = parseFloat(min_price);
+            }
+            if (max_price) {
+                query.price.$lte = parseFloat(max_price);
+            }
+        }
+
+        if (in_stock === 'true') {
+            query.stock = { $gt: 0 };
+        }
+
+        let sortOptions = {};
+        switch (sort_by) {
+            case 'price_asc':
+                sortOptions.price = 1;
+                break;
+            case 'price_desc':
+                sortOptions.price = -1;
+                break;
+            case 'rating_desc':
+                sortOptions.averageRating = -1;
+                break;
+            case 'relevance':
+            default:
+                break;
+        }
+
+        const products = await productsModel.find(query)
+            .sort(sortOptions);
+
+        if (products.length === 0 && Object.keys(query).length > 0) {
+            console.log(`[/GET /search] No products found for the given criteria.`);
+            return res.status(404).json({
+                success: false,
+                error: "No products found matching your search criteria."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: products,
+            message: "Products retrieved successfully."
+        });
+
+    } catch (error) {
+        console.error("[GET /search] Error searching for products:", error);
+        return res.status(500).json({ success: false, error: "Internal server error while searching for products." });
+    }
+};
+
+
+export { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct , productSearch }

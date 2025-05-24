@@ -88,9 +88,6 @@ export const productValidations = [
     check('data.description', 'Description is required')
         .notEmpty(),
 
-    check('data.brand', 'Brand is required')
-        .notEmpty(),
-
     check('data.acceptReturns', 'The acceptReturns field is required')
         .notEmpty(),
         

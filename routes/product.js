@@ -1,6 +1,6 @@
 import express from 'express'
 const router = express.Router();
-import { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct } from '../controllers/product.js';
+import { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct, productSearch } from '../controllers/product.js';
 import { validateFields } from '../middlewares/validateFields.js';
 import { productValidations } from '../middlewares/validations.js';
 import { validateToken } from "../middlewares/validateToken.js";
@@ -18,13 +18,13 @@ router.post('/',[
     validateFields,
 ], postProduct)
 
+router.get("/search-products", productSearch)
+
 router.put('/:id',[
     validateToken,
 ], putProduct);
 
-router.get('/:id',[
-    validateToken
-], getProductById);
+router.get('/find/:id', getProductById);
 
 router.get('/', getAllProducts);
 
@@ -35,6 +35,8 @@ router.put('/state/:id',[
 router.put("/reviews/:id",[
     validateToken
 ], addReviewToProduct)
+
+
 
 
 
