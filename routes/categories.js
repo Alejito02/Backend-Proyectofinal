@@ -21,9 +21,7 @@ router.get("/:id",[
     validateToken
 ], getCategoryById);
 
-router.get("/",[
-    validateToken
-], getAllCategories);
+router.get("/", getAllCategories);
 
 router.put("/state/:id",[
     validateToken
