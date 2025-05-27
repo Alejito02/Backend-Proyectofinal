@@ -184,4 +184,63 @@ const putState = async (req, res) => {
     }
 };
 
-export {postOrders, putOrders, getOrderById, getAllOrders, putState}
+
+const getConvertPesosToDollars = async (req, res) => {
+    try {
+        // Recibe el descuento y los ítems del cuerpo de la solicitud (POST)
+        const { discount, items } = req.body; 
+
+        // Validar que discount sea un número y items un array
+        if (typeof discount !== 'number' || isNaN(discount) || !Array.isArray(items)) {
+            return res.status(400).json({ success: false, error: 'Invalid input: discount must be a number and items must be an array.' });
+        }
+
+        const currentDollarValue = 3900;
+
+        // 1. Calcular el subTotal en COP directamente desde los ITEMS recibidos
+        let calculatedSubTotalCOP = 0;
+        items.forEach(item => {
+            // Asegúrate de que item.price y item.quantity son números
+            calculatedSubTotalCOP += (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0); 
+        });
+
+        // 2. Convertir todos los valores a USD y luego a CENTAVOS de USD (enteros)
+        const dollarDiscountCents = Math.round((discount / currentDollarValue) * 100);
+        const subTotalInDollarsCents = Math.round((calculatedSubTotalCOP / currentDollarValue) * 100);
+        const amountCents = subTotalInDollarsCents - dollarDiscountCents;
+
+        // 3. Formatear los valores de CENTAVOS a DÓLARES (con decimales) y como STRING con 2 decimales
+        const subTotalFormatted = (subTotalInDollarsCents / 100).toFixed(2);
+        const discountFormatted = (dollarDiscountCents / 100).toFixed(2);
+        const amountFormatted = (amountCents / 100).toFixed(2);
+
+        // 4. Convertir y formatear los ítems individuales a USD con 2 decimales
+        const itemsInDollarsFormatted = items.map(product => {
+            const unitPriceCents = Math.round(((parseFloat(product.price) || 0) / currentDollarValue) * 100);
+            return {
+                name: product.name,
+                unit_amount: {
+                    value: (unitPriceCents / 100).toFixed(2),
+                    currency_code: 'USD'
+                },
+                quantity: (parseInt(product.quantity) || 0).toString() // Cantidad como string
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                subTotal: subTotalFormatted,
+                discount: discountFormatted,
+                amount: amountFormatted,
+                items: itemsInDollarsFormatted // Devolvemos los ítems ya convertidos
+            }
+        });
+
+    } catch (error) {
+        console.error('[GET /convertCurrency]', error);
+        return res.status(400).json({ success: false, error: 'The conversion could not be performed', details: error.message });
+    }
+};
+
+export {postOrders, putOrders, getOrderById, getAllOrders, putState , getConvertPesosToDollars}
