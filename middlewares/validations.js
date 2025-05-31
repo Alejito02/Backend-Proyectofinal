@@ -54,29 +54,11 @@ export const orderValidations = [
     check("data.products", "Products must be a non-empty array")
         .isArray({ min: 1 }),
 
-    check("data.products.*.productid", "Each product must have a valid product ID")
-        .notEmpty()
-        .isMongoId().withMessage("Invalid product ID in products array"),
-
-    check("data.products.*.quantity", "Each product must have a valid quantity")
-        .notEmpty()
-        .isInt({ min: 1 }).withMessage("Quantity must be a positive integer"),
-
-    check("data.products.*.price", "Each product must have a valid price")
-        .notEmpty()
-        .isNumeric().withMessage("Price must be a number"),
 
     check("data.total", "Total is required")
         .notEmpty()
         .isNumeric().withMessage("Total must be a number"),
 
-    check("data.status", "Status is required")
-        .notEmpty()
-        .isIn(["pending", "paid", "canceled"]).withMessage("Invalid status"),
-
-    check("data.state", "State must be 0 or 1")
-        .optional()
-        .isIn([0, 1]).withMessage("State must be either 0 (inactive) or 1 (active)")
 ];
 
 
