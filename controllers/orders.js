@@ -51,7 +51,6 @@ const putOrders = async (req, res) => {
             console.warn("[PUT /orders] Invalid ID format");
             return res.status(400).json({ error: "Invalid ID format" });
         }
-
         if (!data || typeof data !== "object") {
             console.warn("[PUT /orders] Non -valid data format");
             return res.status(400).json({
