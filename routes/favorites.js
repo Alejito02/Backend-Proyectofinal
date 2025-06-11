@@ -7,4 +7,4 @@ router.post('/create', postCrear);
 router.get('/list/:userId', getListarTodos);
 router.put('/state/:favoriteId', putState)
 
-export default router;
+export default router;  
