@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
+import productsModel from "../models/products.js";
+import inventoryModel from "../models/inventory.js";
 import ordersModel from "../models/orders.js"; 
+
+
 
 const postOrders = async (req, res) => {
     try {
@@ -43,83 +47,158 @@ const postOrders = async (req, res) => {
 
 
 const putOrders = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { id } = req.params;
-        const data = req.body.data;
+        const data = req.body.data; 
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             console.warn("[PUT /orders] Invalid ID format");
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ error: "Invalid ID format" });
         }
-
-        if (!data || typeof data !== "object") {
-            console.warn("[PUT /orders] Non -valid data format");
+        if (!data || typeof data !== "object" || !Array.isArray(data.products) || data.products.length === 0) {
+            console.warn("[PUT /orders] Non-valid data format or missing products array");
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({
                 success: false,
-                error: "Non -valid data format",
+                error: "Non-valid data format. 'data' must be an object with a non-empty 'products' array.",
             });
         }
 
+        if (!data.userId) {
+            console.warn("[PUT /orders] Missing userId in data for inventory record.");
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                success: false,
+                error: "User ID is required for inventory records.",
+            });
+        }
+
+        for (const element of data.products) {
+            const product = await productsModel.findById(element._id).session(session); 
+
+            if (!product) {
+                console.warn(`[PUT /orders] Product not found: ${element._id}`);
+                await session.abortTransaction(); 
+                session.endSession();
+                return res.status(404).json({
+                    success: false,
+                    error: `Product with ID ${element._id} not found in inventory.`,
+                });
+            }
+
+            if (product.stock < element.quantity) {
+                console.warn(`[PUT /orders] Insufficient stock for product: ${element._id}`);
+                await session.abortTransaction(); 
+                session.endSession();
+                return res.status(400).json({
+                    success: false,
+                    error: `Insufficient stock for product ${product.name || element._id}. Required: ${element.quantity}, Available: ${product.stock}.`,
+                });
+            }
+
+         
+            await productsModel.findByIdAndUpdate(
+                element._id,
+                { $inc: { stock: -element.quantity } },
+                { new: true, runValidators: true, session } 
+            );
+            console.log(`Updated product ${element._id} stock.`);
+
+            const inventoryRecord = new inventoryModel({
+                productId: element._id,
+                type: 'outbound', 
+                quantity: element.quantity,
+                userId: data.userId,
+                orderId: id, 
+                reason: data.reason || 'Order Fulfillment' 
+            });
+            await inventoryRecord.save({ session }); 
+            console.log(`Inventory record created for product ${element._id} related to order ${id}`);
+        }
+
+    
         const updateOrder = await ordersModel.findByIdAndUpdate(
             id,
-            { $set: data },
-            { new: true, runValidators: true, lean: true }
+            { $set: data }, 
+            { new: true, runValidators: true, lean: true, session }
         );
 
         if (!updateOrder) {
-            console.warn(`[PUT /order] order data not found with ID: ${id}`);
+            console.warn(`[PUT /orders] Order data not found with ID: ${id}`);
+            await session.abortTransaction(); 
+            session.endSession();
             return res.status(404).json({
                 success: false,
-                error: "order data not found",
+                error: "Order data not found",
                 message: `No order data was found with the ID: ${id}`,
                 details: {
                     providedId: id,
                     suggestion: "Verify the ID or check if the order was previously deleted"
                 }
-            })
+            });
         }
+
+        await session.commitTransaction();
+        session.endSession();
 
         res.status(200).json({
             success: true,
+            message: "Order and inventory updated successfully.",
             data: updateOrder,
         });
+
     } catch (error) {
-        console.error("[PUT /order] order updated failure", {
+        await session.abortTransaction();
+        session.endSession(); 
+
+        console.error("[PUT /orders] Order update and inventory process failed", {
             message: error.message,
             stack: error.stack,
+            dataReceived: req.body.data,
+            orderId: req.params.id
         });
 
         if (error.name === "ValidationError") {
             return res.status(400).json({
                 success: false,
-                error: "Validation Error",
+                error: "Validation Error during order/inventory update.",
+                details: error.message,
             });
         }
 
         return res.status(500).json({
             success: false,
-            error: "Internal server error",
+            error: "Internal server error during order/inventory update.",
+            details: error.message,
         });
     }
 };
 
 
-const getOrderById = async (req, res) => {
+const getOrdersById = async (req, res) => {
     try {
         const { id } = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             console.warn(`[GET order] invalid id format : ${id}`);
             return res.status(400).json({ error: "Invalid ID format" });
         }
-        const order = await ordersModel.findById(id);
+        const order = await ordersModel.find({userId:id});
         if (!order) {
             console.warn(`[GET order] order with ID: ${id} not found`);
             return res.status(404).json({ error: "order not found" });
         }
         return res.status(200).json({ 
             success:true,
+            count:order.length,
             data:order
-         });
+        });
     } catch (error) {
         console.error(`[GET order] Critical error : ${error.message}`, error.stack);
         return res.status(500).json({ error: "Internal server error" });
@@ -243,4 +322,4 @@ const getConvertPesosToDollars = async (req, res) => {
     }
 };
 
-export {postOrders, putOrders, getOrderById, getAllOrders, putState , getConvertPesosToDollars}
+export {postOrders, putOrders, getOrdersById, getAllOrders, putState , getConvertPesosToDollars}

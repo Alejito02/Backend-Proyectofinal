@@ -85,6 +85,9 @@ const postUsers = async (req, res) => {
             });
         }
 
+
+        //poner validaciones para email y numeros , no se puede crear un documento si el email o telefono ya existe en la base
+
         const encryptedPassword = await bcrypt.hash(data.password , 10);
         const user = new usersModel(data);
         user.password = encryptedPassword
@@ -232,4 +235,69 @@ const putState = async (req, res) => {
     }
 };
 
-export {login, postUsers, putUser, getUsers, getUser, putState };
+const updatePassword = async (req,res)=>{
+    try {
+        const {password, email} = req.body;
+        const user = await usersModel.findOne({email});
+        if (!user) {
+            console.warn(`[PUT State] User not found. Email: ${email}`);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const encryptedPassword = await bcrypt.hash(password , 10);
+        if(!encryptedPassword){
+            console.warn(`[PUT /password] Error updating password`, encryptedPassword)
+            return res.status(400).json({error:'Error updating password'})
+        }
+        user.password = encryptedPassword
+        await user.save();
+        return res.status(200).json({success:true, message:"updated password"})
+    } catch (error) {
+         console.error("Error in put password:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+
+
+const checkPhoneNumberExistence = async (req, res) => {
+    try {
+        const { phone } = req.params; 
+
+        if (!phone) {
+            console.warn("[checkPhoneNumberExistence] Phone number was not provided.");
+            return res.status(400).json({
+                success: false,
+                message: "Phone number is required."
+            });
+        }
+
+        const phoneNumber = phone.split('+57')[1]
+        const user = await usersModel.findOne({ phone: phoneNumber }); 
+
+        if (!user) {
+            console.log(`[checkPhoneNumberExistence] No user found for phone number: ${phone}`);
+            return res.status(404).json({ // Use 404 Not Found
+                success: false,
+                message: "If this phone number is associated with an account, a code will be sent."
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            email: user.email, 
+            message: "Phone number found." 
+        });
+
+    } catch (error) {
+        console.error('[checkPhoneNumberExistence] Error in controller:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error. Please try again later."
+        });
+    }
+};
+
+
+
+export {login, postUsers, putUser, getUsers, getUser, putState, updatePassword, checkPhoneNumberExistence };

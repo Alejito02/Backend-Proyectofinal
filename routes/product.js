@@ -1,6 +1,6 @@
 import express from 'express'
 const router = express.Router();
-import { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct, productSearch } from '../controllers/product.js';
+import { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct, productSearch, getProductsOnOffer } from '../controllers/product.js';
 import { validateFields } from '../middlewares/validateFields.js';
 import { productValidations } from '../middlewares/validations.js';
 import { validateToken } from "../middlewares/validateToken.js";
@@ -20,11 +20,14 @@ router.post('/',[
 
 router.get("/search-products", productSearch)
 
+router.get('/find/:id', getProductById);
+
+router.get('/offers',getProductsOnOffer);
+
 router.put('/:id',[
     validateToken,
 ], putProduct);
 
-router.get('/find/:id', getProductById);
 
 router.get('/', getAllProducts);
 

@@ -4,8 +4,6 @@ const router = express.Router();
 
 import { sendEmail } from '../services/sendEmail.js';
 
-router.post("/",[
-    validateToken
-], sendEmail);
+router.post("/welcome", sendEmail);
 
 export default router

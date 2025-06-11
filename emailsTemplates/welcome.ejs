@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Bienvenido a ColproMarket</title>
+    <style>
+        /* Estilos generales para el cuerpo del correo */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        /* Contenedor principal del email */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Para asegurar bordes redondeados */
+        }
+        /* Encabezado del email */
+        .header {
+            background-color: #007bff; /* Un azul vibrante */
+            color: #ffffff;
+            padding: 20px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.2;
+        }
+        /* Contenido principal del email */
+        .content {
+            padding: 30px;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        /* Estilo para el botón de acción */
+        .button-container {
+            text-align: center;
+            margin-top: 25px;
+            margin-bottom: 25px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #28a745; /* Un verde de éxito */
+            color: #ffffff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        /* Pie de página */
+        .footer {
+            background-color: #f0f0f0;
+            color: #777777;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #eeeeee;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>¡Hola, <%= userName %>!</h1>
+        </div>
+
+        <div class="content">
+            <p>¡Bienvenido a nuestra aplicación! Estamos muy emocionados de tenerte con nosotros.</p>
+            <p>Ahora que tu cuenta está lista, puedes empezar a explorar todas las funciones que tenemos para ti.</p>
+
+            <div class="button-container">
+                <a href="<%= dashboardLink %>" class="button">Ir a la aplicación</a>
+            </div>
+
+            <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.</p>
+            <p>¡Gracias por unirte a nuestra comunidad!</p>
+            <p>Saludos cordiales,<br>El Equipo de Tu Aplicación</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; <%= currentYear %> ColproMarket. Todos los derechos reservados.</p>
+            <p>Este email fue enviado desde nuestra sede en San gil, Santander, Colombia.</p>
+        </div>
+    </div>
+</body>
+</html>
