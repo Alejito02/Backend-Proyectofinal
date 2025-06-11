@@ -75,7 +75,7 @@ const getListarTodos = async (req, res) => {
         const favorites = await favoritesModel.find({
             userId,
             state: 1 // S olo los activos
-        }).populate('productId', 'name price image description')
+        }).populate('productId', 'name price images description')
             .sort({ createdAt: -1 }).populate('userId'); // Ordenar por más recientes
 
         return res.status(200).json({
