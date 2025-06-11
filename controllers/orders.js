@@ -182,20 +182,21 @@ const putOrders = async (req, res) => {
 };
 
 
-const getOrderById = async (req, res) => {
+const getOrdersById = async (req, res) => {
     try {
         const { id } = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) {
             console.warn(`[GET order] invalid id format : ${id}`);
             return res.status(400).json({ error: "Invalid ID format" });
         }
-        const order = await ordersModel.findById(id);
+        const order = await ordersModel.find({userId:id});
         if (!order) {
             console.warn(`[GET order] order with ID: ${id} not found`);
             return res.status(404).json({ error: "order not found" });
         }
         return res.status(200).json({ 
             success:true,
+            count:order.length,
             data:order
         });
     } catch (error) {
@@ -321,4 +322,4 @@ const getConvertPesosToDollars = async (req, res) => {
     }
 };
 
-export {postOrders, putOrders, getOrderById, getAllOrders, putState , getConvertPesosToDollars}
+export {postOrders, putOrders, getOrdersById, getAllOrders, putState , getConvertPesosToDollars}
