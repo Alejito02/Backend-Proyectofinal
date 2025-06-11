@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true, select: false },
     lastName: { type: String, trim: true, maxlength: 50, default: "No especificado" }, 
-    phone: { type: String, trim: true, maxlength: 20, default: "N/A", unique:true }, 
+    phone: { type: String, trim: true, maxlength: 20, default: "N/A"}, 
     shippingAddress: {
         street: { type: String, trim: true, maxlength: 100, default: "No especificado" },
         city: { type: String, trim: true, maxlength: 50, default: "No especificada" },
