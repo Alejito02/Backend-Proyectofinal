@@ -4,18 +4,18 @@ import mongoose from "mongoose";
 const postProduct = async (req, res) => {
     try {
         const { data } = req.body;
-        const images = req.files
+        const images = req.files;
 
         if (!images) {
-            return res.status(400).json({ message: 'No image uploaded' });
+            return res.status(400).json({ message: "No image uploaded" });
         }
 
-        data.images = []
+        data.images = [];
         for (const element of images) {
             data.images.push({
                 urlImage: element.path,
-                publicId: element.filename
-            })
+                publicId: element.filename,
+            });
         }
 
         if (!data || typeof data !== "object") {
@@ -54,8 +54,6 @@ const postProduct = async (req, res) => {
     }
 };
 
-
-
 const putProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -88,9 +86,10 @@ const putProduct = async (req, res) => {
                 message: `product data was found with the ID: ${id}`,
                 details: {
                     providedId: id,
-                    suggestion: "Verify the ID or check if the product was previously deleted"
-                }
-            })
+                    suggestion:
+                        "Verify the ID or check if the product was previously deleted",
+                },
+            });
         }
 
         res.status(200).json({
@@ -117,7 +116,6 @@ const putProduct = async (req, res) => {
     }
 };
 
-
 const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -132,19 +130,23 @@ const getProductById = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            data: product
+            data: product,
         });
     } catch (error) {
-        console.error(`[GET product] Critical error : ${error.message}`, error.stack);
+        console.error(
+            `[GET product] Critical error : ${error.message}`,
+            error.stack
+        );
         return res.status(500).json({ error: "Internal server error" });
     }
 };
 
-
-
 const getAllProducts = async (req, res) => {
     try {
-        const products = await productsModel.find().select("-__v").populate('reviews.userId');
+        const products = await productsModel
+            .find()
+            .select("-__v")
+            .populate(["reviews.userId", "categoryId"]);
 
         if (products.length === 0) {
             console.warn("[GET /products] No products found");
@@ -152,15 +154,17 @@ const getAllProducts = async (req, res) => {
         }
         //modificar para calcular tambien los que estan con stock 0
 
-
-        const stock = products.reduce((accumulator, product) => {
-            if (product.stock > 0) {
-                accumulator.stockAvailable += product.stock;
-            } else {
-                accumulator.zeroStock++;
-            }
-            return accumulator;
-        }, { stockAvailable: 0, zeroStock: 0 });
+        const stock = products.reduce(
+            (accumulator, product) => {
+                if (product.stock > 0) {
+                    accumulator.stockAvailable += product.stock;
+                } else {
+                    accumulator.zeroStock++;
+                }
+                return accumulator;
+            },
+            { stockAvailable: 0, zeroStock: 0 }
+        );
 
         return res.status(200).json({
             success: true,
@@ -179,8 +183,6 @@ const getAllProducts = async (req, res) => {
         });
     }
 };
-
-
 
 const putState = async (req, res) => {
     try {
@@ -211,8 +213,6 @@ const putState = async (req, res) => {
     }
 };
 
-
-
 const addReviewToProduct = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -225,21 +225,21 @@ const addReviewToProduct = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(productId)) {
             return res.status(400).json({
                 success: false,
-                message: "ID de producto inválido"
+                message: "ID de producto inválido",
             });
         }
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({
                 success: false,
-                message: "ID de usuario inválido"
+                message: "ID de usuario inválido",
             });
         }
 
-        if (typeof stars !== 'number' || stars < 1 || stars > 5) {
+        if (typeof stars !== "number" || stars < 1 || stars > 5) {
             return res.status(400).json({
                 success: false,
-                message: "Las estrellas deben ser un número entre 1 y 5"
+                message: "Las estrellas deben ser un número entre 1 y 5",
             });
         }
 
@@ -248,11 +248,13 @@ const addReviewToProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({
                 success: false,
-                message: "Producto no encontrado"
+                message: "Producto no encontrado",
             });
         }
 
-        const reviewIndex = product.reviews.findIndex(r => r.userId.toString() === userId);
+        const reviewIndex = product.reviews.findIndex(
+            (r) => r.userId.toString() === userId
+        );
 
         // Operación de actualización/inserción
         let updateOperation;
@@ -264,8 +266,8 @@ const addReviewToProduct = async (req, res) => {
                 $set: {
                     [`reviews.${reviewIndex}.stars`]: stars,
                     [`reviews.${reviewIndex}.message`]: message,
-                    [`reviews.${reviewIndex}.updatedAt`]: new Date()
-                }
+                    [`reviews.${reviewIndex}.updatedAt`]: new Date(),
+                },
             };
             messageResponse = "Reseña actualizada exitosamente";
         } else {
@@ -276,19 +278,17 @@ const addReviewToProduct = async (req, res) => {
                         userId,
                         stars,
                         message,
-                        createdAt: new Date()
-                    }
-                }
+                        createdAt: new Date(),
+                    },
+                },
             };
             messageResponse = "Reseña agregada exitosamente";
         }
 
         // Ejecutar la operación
-        const updatedProduct = await productsModel.findByIdAndUpdate(
-            productId,
-            updateOperation,
-            { new: true, session }
-        ).populate('reviews.userId');
+        const updatedProduct = await productsModel
+            .findByIdAndUpdate(productId, updateOperation, { new: true, session })
+            .populate("reviews.userId");
 
         // Calcular nuevo promedio
         const reviews = updatedProduct.reviews;
@@ -308,9 +308,8 @@ const addReviewToProduct = async (req, res) => {
             message: messageResponse,
             product: updatedProduct,
             averageRating,
-            reviewCount: reviews.length
+            reviewCount: reviews.length,
         });
-
     } catch (error) {
         await session.abortTransaction();
         console.error("[PUT /product/reviews]", error);
@@ -318,39 +317,31 @@ const addReviewToProduct = async (req, res) => {
         if (error.code === 11000) {
             return res.status(400).json({
                 success: false,
-                message: "El usuario ya ha realizado una reseña para este producto"
+                message: "El usuario ya ha realizado una reseña para este producto",
             });
         }
 
         return res.status(500).json({
             success: false,
             message: "Error al procesar la reseña",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     } finally {
         session.endSession();
     }
 };
 
-
-
 const productSearch = async (req, res) => {
     try {
-        const {
-            search,
-            categoryId,
-            min_price,
-            max_price,
-            sort_by,
-            in_stock,
-        } = req.query;
+        const { search, categoryId, min_price, max_price, sort_by, in_stock } =
+            req.query;
 
         let query = {};
 
         if (search) {
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
+                { name: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
             ];
         }
 
@@ -368,48 +359,104 @@ const productSearch = async (req, res) => {
             }
         }
 
-        if (in_stock === 'true') {
+        if (in_stock === "true") {
             query.stock = { $gt: 0 };
         }
 
         let sortOptions = {};
         switch (sort_by) {
-            case 'price_asc':
+            case "price_asc":
                 sortOptions.price = 1;
                 break;
-            case 'price_desc':
+            case "price_desc":
                 sortOptions.price = -1;
                 break;
-            case 'rating_desc':
+            case "rating_desc":
                 sortOptions.averageRating = -1;
                 break;
-            case 'relevance':
+            case "relevance":
             default:
                 break;
         }
 
-        const products = await productsModel.find(query)
-            .sort(sortOptions);
+        const products = await productsModel.find(query).sort(sortOptions);
 
         if (products.length === 0 && Object.keys(query).length > 0) {
             console.log(`[/GET /search] No products found for the given criteria.`);
             return res.status(404).json({
                 success: false,
-                error: "No products found matching your search criteria."
+                error: "No products found matching your search criteria.",
             });
         }
 
         return res.status(200).json({
             success: true,
             data: products,
-            message: "Products retrieved successfully."
+            message: "Products retrieved successfully.",
         });
-
     } catch (error) {
         console.error("[GET /search] Error searching for products:", error);
-        return res.status(500).json({ success: false, error: "Internal server error while searching for products." });
+        return res
+            .status(500)
+            .json({
+                success: false,
+                error: "Internal server error while searching for products.",
+            });
     }
 };
 
+const getProductsOnOffer = async (req, res) => {
+    try {
+        const now = new Date();
+        const todayFormatted = now.toISOString().split('T')[0];
 
-export { postProduct, putProduct, getProductById, getAllProducts, putState, addReviewToProduct , productSearch }
+        const products = await productsModel
+            .find({
+                offer: 1,
+                'offerDateRange.from': { $lte: todayFormatted },
+                'offerDateRange.to': { $gte: todayFormatted },
+            })
+            .lean();
+
+        if (products.length === 0) {
+            console.log(
+                "[INFO] getProductsOnOffer: No active products on offer found."
+            );
+            return res.status(200).json({
+                success: true,
+                message: "No active products on offer found.",
+                count: 0,
+                data: [],
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Active products on offer retrieved successfully.",
+            count: products.length,
+            data: products,
+        });
+    } catch (error) {
+        console.error(
+            "[ERROR] getProductsOnOffer: Failed to retrieve products on offer.",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "An internal server error occurred while retrieving active offers.",
+        });
+    }
+};
+
+export {
+    postProduct,
+    putProduct,
+    getProductById,
+    getAllProducts,
+    putState,
+    addReviewToProduct,
+    productSearch,
+    getProductsOnOffer
+};
