@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 async function renderEmailTemplate(templatePath, data) {
     try {
 
-        const fullTemplatePath = path.join(process.cwd(), 'emailsTemplates', templatePath);
+        const fullTemplatePath = path.join(process.cwd(), 'templates', templatePath);
         const templateContent = await fs.readFile(fullTemplatePath, 'utf8');
         return ejs.render(templateContent, data);   
     } catch (error) {
