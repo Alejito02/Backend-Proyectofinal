@@ -1,362 +1,153 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factura ColproMarket #<%= invoice._id %></title>
-    <style>
-        /* Definición de la paleta de colores CSS */
-        :root {
-            --one-color--: #FBFBFB;
-            --two-color--: #E8F9FF;
-            --three-color--: #C4D9FF;
-            --four-color--: #C5BAFF;
-            --cambio--: #8E7DBE;
-            --six-color--: #cdcbfc;
-            --seven-color--: #3813f0;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --background: #f9f9f9;
-            --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Sombra más suave */
-            --border-color: #eee; /* Bordes más claros */
-            --header-bg: #1a2a6c;
-            --header-bg-gradient: linear-gradient(to right, #1a2a6c, #204a87);
-            --drawer-bg: linear-gradient(to bottom, #ffffff, #f9f9f9);
-            --drawer-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-            --primary-button: var(--five-color--);
-            --primary-button-hover: #7a68a6;
-            --menu-item-hover: #f5f5f5;
-            --menu-item-active: #e3f2fd;
-            --menu-item-active-color: #1976D2;
-            --five-color--: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
-            --fiv-color--: #1976d2; /* Para el color sólido base del gradiente */
-        }
 
-        /* Estilos generales del documento */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente moderna */
-            margin: 0;
-            padding: 0;
-            font-size: 11px;
-            color: var(--text-primary);
-            line-height: 1.6;
-            background-color: var(--background);
-        }
-
-        /* Contenedor principal de la factura */
-        .invoice-container {
-            width: 210mm; /* Ancho de A4 */
-            min-height: 297mm; /* Alto de A4 */
-            margin: 0 auto;
-            background-color: var(--one-color--); /* Fondo claro de la tarjeta */
-            box-shadow: var(--card-shadow);
-            padding: 25mm;
-            box-sizing: border-box;
-        }
-
-        /* Encabezado de la factura */
-        .invoice-header {
-            background: var(--header-bg-gradient); /* Degradado del header */
-            color: var(--one-color--); /* Texto blanco sobre el fondo oscuro */
-            padding: 20px 25mm 20px 25mm; /* Padding top/bottom, y para que coincida con el margen del contenedor */
-            margin: -25mm -25mm 30px -25mm; /* Margen negativo para extenderse a los bordes del PDF */
-            overflow: hidden;
-            box-sizing: border-box;
-            border-bottom: 5px solid var(--fiv-color--); /* Línea de color de marca */
-        }
-
-        .invoice-header .logo-text {
-            float: left;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-            color: var(--two-color--); /* Un tono más claro del azul */
-        }
-
-        .invoice-header .header-info {
-            float: right;
-            text-align: right;
-            font-size: 11px;
-        }
-
-        .invoice-header .header-info span {
-            display: block;
-            margin-bottom: 3px;
-        }
-        .invoice-header .header-info strong {
-            font-weight: bold;
-            color: var(--one-color--);
-        }
-
-        .company-contact {
-            margin-top: 15px;
-            text-align: left;
-            font-size: 10px;
-            color: var(--two-color--);
-        }
-
-        /* Título de la factura y estado */
-        .invoice-title-status {
-            overflow: hidden;
-            margin-bottom: 25px;
-            font-size: 14px;
-            padding-top: 10px;
-        }
-        .invoice-title-status h1 {
-            float: left;
-            margin: 0;
-            color: var(--fiv-color--);
-            font-size: 20px;
-        }
-        .invoice-title-status .status-badge {
-            float: right;
-            background-color: var(--fiv-color--); /* Color principal para pagado */
-            color: var(--one-color--);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .invoice-title-status .status-badge.pending { background-color: var(--cambio--); } /* Color para pendiente */
-        .invoice-title-status .status-badge.canceled { background-color: #F44336; } /* Rojo para cancelado */
-
-        /* Secciones de información del cliente y envío */
-        .info-grid {
-            display: flex; /* Usamos flexbox para una disposición más moderna */
-            justify-content: space-between;
-            margin-bottom: 30px;
-            gap: 20px; /* Espacio entre las columnas */
-        }
-        .info-block {
-            flex: 1; /* Para que ocupen el espacio disponible equitativamente */
-            background-color: var(--two-color--); /* Fondo suave */
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-        }
-        .info-block strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 13px;
-            color: var(--fiv-color--); /* Título de sección con color principal */
-            border-bottom: 1px solid var(--three-color--); /* Línea divisoria suave */
-            padding-bottom: 5px;
-        }
-        .info-block p {
-            margin: 3px 0;
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        /* Tabla de productos */
-        .products-table {
-            width: 100%;
-            border-collapse: separate; /* Para que border-radius en td/th funcione */
-            border-spacing: 0; /* Elimina espacio entre celdas */
-            margin-top: 30px;
-            margin-bottom: 30px;
-            border-radius: 8px; /* Bordes redondeados para la tabla */
-            overflow: hidden; /* Asegura que los bordes redondeados sean visibles */
-        }
-        .products-table th, .products-table td {
-            padding: 12px 15px;
-            font-size: 11px;
-            border-bottom: 1px solid var(--border-color); /* Separador sutil */
-        }
-        .products-table th {
-            background-color: var(--three-color--); /* Fondo de encabezado de tabla */
-            font-weight: bold;
-            color: var(--text-primary);
-            text-align: left;
-            text-transform: uppercase;
-        }
-        .products-table tr:last-child td {
-            border-bottom: none; /* No hay borde en la última fila */
-        }
-        .products-table tbody tr:nth-child(even) {
-            background-color: var(--one-color--); /* Rayas sutiles para legibilidad */
-        }
-        .products-table td {
-            background-color: var(--one-color--);
-            color: var(--text-primary);
-        }
-
-        /* Alineación específica de columnas de la tabla */
-        .products-table th:nth-child(2), /* Cantidad */
-        .products-table td:nth-child(2) {
-             text-align: center;
-        }
-        .products-table th:nth-child(3), /* Precio Unitario */
-        .products-table td:nth-child(3),
-        .products-table th:nth-child(4), /* Descuento */
-        .products-table td:nth-child(4),
-        .products-table th:nth-child(5), /* Total Item */
-        .products-table td:nth-child(5) {
-            text-align: right;
-        }
-
-        /* Totales de la factura */
-        .invoice-summary {
-            width: 50%; /* Ocupa la mitad derecha del espacio */
-            float: right;
-            background-color: var(--two-color--); /* Fondo suave */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            margin-top: 20px;
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 12px;
-            color: var(--text-primary);
-        }
-        .summary-row.total {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--fiv-color--); /* Color principal para el total */
-            border-top: 2px solid var(--fiv-color--);
-            padding-top: 12px;
-            margin-top: 15px;
-        }
-        .summary-row span:first-child {
-            font-weight: bold;
-        }
-
-        /* Información de pago en el pie de página */
-        .payment-details {
-            clear: both; /* Limpia los floats */
-            margin-top: 40px;
-            padding: 20px;
-            background-color: var(--two-color--);
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            font-size: 11px;
-            color: var(--text-primary);
-        }
-        .payment-details strong {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: var(--fiv-color--);
-        }
-        .payment-details p {
-            margin: 5px 0;
-        }
-        .payment-details span:first-child {
-            font-weight: bold;
-            display: inline-block;
-            width: 130px; /* Alineación de etiquetas */
-        }
-
-        /* Pie de página general */
-        .invoice-footer {
-            text-align: center;
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
-    </style>
-</head>
-<body>
-    <div class="invoice-container">
-        <div class="invoice-header">
-            <h1 class="logo-text">ColproMarket</h1>
-            <div class="header-info">
-                <span>Fecha: <%= formatDate(invoice.createdAt) %></span>
-                <span>Factura No: <strong><%= invoice._id ? invoice._id.substring(0, 8) : 'N/A' %></strong></span>
-            </div>
-            <div class="company-contact">
-                <p>Tu Mercado Colombiano Online</p>
-                <p>Dirección: Calle 10 #20-30, Bogotá D.C., Colombia</p>
-                <p>Email: contacto@colpromarket.com | Teléfono: +57 1 234 5678</p>
-            </div>
-        </div>
-
-        <div class="invoice-title-status">
-            <h1>Factura de Compra</h1>
-            <span class="status-badge <%= invoice.status.toLowerCase() %>"><%= invoice.status %></span>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-block">
-                <strong>Información del Cliente</strong>
-                <p><strong>Nombre:</strong> <%= invoice.paypalData.payer.name.full_name || 'N/A' %></p>
-                <p><strong>Email:</strong> <%= invoice.paypalData.payer.email_address || 'N/A' %></p>
-                <p><strong>Teléfono:</strong> <%= invoice.paypalData.payer.phone_number || 'N/A' %></p>
-            </div>
-            <div class="info-block">
-                <strong>Dirección de Envío</strong>
-                <% if (invoice.paypalData.purchase_units && invoice.paypalData.purchase_units[0] && invoice.paypalData.purchase_units[0].shipping && invoice.paypalData.purchase_units[0].shipping.address) { %>
-                    <p><%= invoice.paypalData.purchase_units[0].shipping.address.address_line_1 || 'No especificado' %></p>
-                    <p><%= invoice.paypalData.purchase_units[0].shipping.address.admin_area_2 || 'No especificado' %>, <%= invoice.paypalData.purchase_units[0].shipping.address.admin_area_1 || 'No especificado' %></p>
-                    <p><%= invoice.paypalData.purchase_units[0].shipping.address.postal_code || 'No especificado' %> - <%= invoice.paypalData.purchase_units[0].shipping.address.country_code || 'N/A' %></p>
-                <% } else { %>
-                    <p>No especificado</p>
-                    <p>No especificado</p>
-                    <p>No especificado</p>
-                <% } %>
-            </div>
-        </div>
-
-        <table class="products-table">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Descuento</th>
-                    <th>Total Ítem</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% invoice.products.forEach((product, index) => { %>
-                <tr>
-                    <td><%= product.name || `Producto ${index + 1}` %></td>
-                    <td><%= product.quantity || 1 %></td>
-                    <td><%= formatCurrency(product.price) %></td>
-                    <td><%= product.discount ? (product.discount / product.price * 100).toFixed(0) + '%' : '0%' %></td>
-                    <td><%= formatCurrency(product.total) %></td>
-                </tr>
-                <% }); %>
-            </tbody>
-        </table>
-
-        <div class="invoice-summary">
-            <div class="summary-row">
-                <span>Subtotal Ítems:</span>
-                <span><%= formatCurrency(invoice.paypalData.purchase_units[0].amount.breakdown.item_total.value, invoice.paypalData.purchase_units[0].amount.breakdown.item_total.currency_code) %></span>
-            </div>
-            <div class="summary-row">
-                <span>Descuento Aplicado:</span>
-                <span><%= formatCurrency(invoice.paypalData.purchase_units[0].amount.breakdown.discount.value, invoice.paypalData.purchase_units[0].amount.breakdown.discount.currency_code) %></span>
-            </div>
-            <div class="summary-row">
-                <span>Envío:</span>
-                <span><%= formatCurrency(invoice.paypalData.purchase_units[0].amount.breakdown.shipping.value, invoice.paypalData.purchase_units[0].amount.breakdown.shipping.currency_code) %></span>
-            </div>
-            <div class="summary-row total">
-                <span>TOTAL PAGADO:</span>
-                <span><%= formatCurrency(invoice.paypalData.purchase_units[0].amount.value, invoice.paypalData.purchase_units[0].amount.currency_code) %></span>
-            </div>
-        </div>
-
-        <div class="payment-details">
-            <strong>Detalles del Pago</strong>
-            <p><span>Método:</span> PayPal</p>
-            <p><span>ID de transacción:</span> <%= invoice.paypalData.id || 'N/A' %></p>
-            <p><span>Estado:</span> <%= invoice.paypalData.purchase_units[0].payments.captures[0].status || 'N/A' %></p>
-            <p><span>Fecha de pago:</span> <%= formatDate(invoice.paypalData.purchase_units[0].payments.captures[0].create_time) || 'N/A' %></p>
-        </div>
-
-        <div class="invoice-footer">
-            <p>Agradecemos su compra en ColproMarket.</p>
-            <p>Esta es una factura generada automáticamente y no requiere firma.</p>
-        </div>
-    </div>
-</body>
-</html>
+Parece que comenzaste a compartir el código HTML y CSS para una plantilla de factura. Aquí tienes un ejemplo completo y funcional a partir del código que comenzaste. Esto incluye el resto de la estructura y algunos estilos para que puedas ver cómo se presenta la factura en su totalidad.
+Código HTML Completo para la Factura
+html
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factura ColproMarket #<%= invoice._id %><style>
+:root {
+--one-color: #FBFBFB;
+--two-color: #E8F9FF;
+--three-color: #C4D9FF;
+--four-color: #C5BAFF;
+--cambio: #8E7DBE;
+--six-color: #cdcbfc;
+--seven-color: #3813f0;
+--text-primary: #333;
+--text-secondary: #666;
+--background: #f9f9f9;
+--card-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+--border-color: #eee;
+--header-bg: #1a2a6c;
+--header-bg-gradient: linear-gradient(to right, #1a2a6c, #204a87);
+--primary-button: #1976d2;
+--primary-button-hover: #7a68a6;
+--fiv-color: #1976d2;
+}
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+margin: 0;
+padding: 0;
+font-size: 11px;
+color: var(--text-primary);
+line-height: 1.6;
+background-color: var(--background);
+}
+.invoice-container {
+width: 210mm;
+min-height: 297mm;
+margin: 0 auto;
+background-color: var(--one-color);
+box-shadow: var(--card-shadow);
+padding: 25mm;
+box-sizing: border-box;
+}
+.invoice-header {
+background: var(--header-bg-gradient);
+color: var(--one-color);
+padding: 20px 25mm;
+margin: -25mm -25mm 30px -25mm;
+overflow: hidden;
+border-bottom: 5px solid var(--fiv-color);
+}
+.invoice-header .logo-text {
+float: left;
+font-size: 24px;
+font-weight: bold;
+margin: 0;
+color: var(--two-color);
+}
+.invoice-header .header-info {
+float: right;
+text-align: right;
+font-size: 11px;
+}
+.invoice-header .header-info span {
+display: block;
+margin-bottom: 3px;
+}
+.invoice-header .header-info strong {
+font-weight: bold;
+color: var(--one-color);
+}
+.company-contact {
+margin-top: 15px;
+text-align: left;
+font-size: 10px;
+color: var(--two-color);
+}
+.invoice-title-status {
+margin-bottom: 25px;
+font-size: 14px;
+padding-top: 10px;
+}
+.invoice-title-status h1 {
+float: left;
+margin: 0;
+color: var(--fiv-color);
+font-size: 20px;
+}
+.invoice-title-status .status-badge {
+float: right;
+background-color: var(--fiv-color);
+color: var(--one-color);
+padding: 5px 12px;
+border-radius: 20px;
+font-size: 12px;
+font-weight: bold;
+text-transform: uppercase;
+}
+.invoice-title-status .status-badge.pending { background-color: var(--cambio); }
+.invoice-title-status .status-badge.canceled { background-color: #F44336; }
+.info-grid {
+display: flex;
+justify-content: space-between;
+margin-bottom: 30px;
+gap: 20px;
+}
+.info-block {
+flex: 1;
+background-color: var(--two-color);
+padding: 10px;
+border-radius: 5px;
+}
+.info-block h3 {
+margin: 0;
+font-size: 14px;
+}
+.items-table {
+width: 100%;
+border-collapse: collapse;
+margin-bottom: 30px;
+}
+.items-table th, .items-table td {
+border: 1px solid var(--border-color);
+padding: 8px;
+text-align: left;
+}
+.items-table th {
+background-color: var(--three-color);
+}
+.total {
+font-size: 16px;
+font-weight: bold;
+text-align: right;
+margin-top: 20px;
+}
+</style>
+<div class="invoice-container">
+<div class="invoice-header">
+ColproMarket
+<span>Fecha: <%= invoice.date %><span>Factura #: <%= invoice._id %><div class="invoice-title-status">
+FacturaPagado
+<div class="info-block">
+Cliente<%= invoice.client.name %><%= invoice.client.address %><%= invoice.client.phone %>
+Detalles de Envío<%= invoice.shipping.address %><%= invoice.shipping.city %><%= invoice.shipping.zip %>
+<thead>
+<tr>
+<th>Descripción<th>Cantidad<th>Precio Unitario<th>Total<tbody>
+<% invoice.items.forEach(function(item) { %>
+<tr>
+<td><%= item.description %><td><%= item.quantity %><td><%= item.unitPrice.toFixed(2) %>€<td><%= (item.quantity * item.unitPrice).toFixed(2) %>€<% }) %>
+<div class="total">
+Total: <%= invoice.total.toFixed(2) %>€
