@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { usersModel } from '../models/users.js';
 const generateJwt = (userID) => {
     const payload = {userID}
-    return jwt.sign(payload,process.env.SECRETORPRIVATEKEY,{expiresIn:'8h'})
+    return jwt.sign(payload,process.env.SECRETORPRIVATEKEY,{expiresIn:'24h'})
 }
 
 

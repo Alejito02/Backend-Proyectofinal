@@ -9,6 +9,7 @@ import inventoryRouter from "./routes/inventory.js"
 import productRouter from './routes/product.js'
 import ordersRouter from './routes/orders.js'
 import emailRouter from './routes/sendEmail.js'
+import invoiceRouter from './routes/invoicePdf.js'
 
 dotenv.config();
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/inventory", inventoryRouter);
 app.use("/api/product", productRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/email", emailRouter);
+app.use("/api/invoice",invoiceRouter);
 
 const startServer = async () => {
     try {

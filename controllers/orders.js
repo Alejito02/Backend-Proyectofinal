@@ -189,7 +189,7 @@ const getOrdersById = async (req, res) => {
             console.warn(`[GET order] invalid id format : ${id}`);
             return res.status(400).json({ error: "Invalid ID format" });
         }
-        const order = await ordersModel.find({userId:id});
+        const order = await ordersModel.find({userId:id}).populate('userId');
         if (!order) {
             console.warn(`[GET order] order with ID: ${id} not found`);
             return res.status(404).json({ error: "order not found" });
