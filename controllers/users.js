@@ -164,8 +164,12 @@ const putUser = async (req, res) => {
 const getUsers = async (req, res) => {
     try {
         const users = await usersModel.find().select("-password -__v");
+        const activeUsers = await usersModel.find({state:1}).select("-password -__v");
+        const inactiveUsers = await usersModel.find({state:0}).select("-password -__v");
+        const administrators = await usersModel.find({role:0}).select("-password -__v");;
 
-        if (users.length === 0) {
+
+        if (users.length === 0 && activeUsers.length === 0 && inactiveUsers.length === 0 && administrators.length === 0){
             console.warn("[GET /users] No users found");
             return res.status(200).json({ users: [] });
         }
@@ -173,6 +177,9 @@ const getUsers = async (req, res) => {
         return res.status(200).json({
             success: true,
             count: users.length,
+            activeUsers:activeUsers.length,
+            inactiveUsers:inactiveUsers.length,
+            administrators:administrators.length,
             users,
         });
     } catch (error) {

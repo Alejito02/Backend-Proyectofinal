@@ -1,13 +1,11 @@
 import mongoose from "mongoose";
 import productsModel from "../models/products.js";
 import inventoryModel from "../models/inventory.js";
-import ordersModel from "../models/orders.js"; 
-
-
+import ordersModel from "../models/orders.js";
 
 const postOrders = async (req, res) => {
     try {
-        const {data} = req.body;
+        const { data } = req.body;
 
         if (!data || typeof data !== "object") {
             console.warn("[POST /orders] invalid orders data format", { data });
@@ -45,14 +43,13 @@ const postOrders = async (req, res) => {
     }
 };
 
-
 const putOrders = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         const { id } = req.params;
-        const data = req.body.data; 
+        const data = req.body.data;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             console.warn("[PUT /orders] Invalid ID format");
@@ -60,18 +57,28 @@ const putOrders = async (req, res) => {
             session.endSession();
             return res.status(400).json({ error: "Invalid ID format" });
         }
-        if (!data || typeof data !== "object" || !Array.isArray(data.products) || data.products.length === 0) {
-            console.warn("[PUT /orders] Non-valid data format or missing products array");
+        if (
+            !data ||
+            typeof data !== "object" ||
+            !Array.isArray(data.products) ||
+            data.products.length === 0
+        ) {
+            console.warn(
+                "[PUT /orders] Non-valid data format or missing products array"
+            );
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({
                 success: false,
-                error: "Non-valid data format. 'data' must be an object with a non-empty 'products' array.",
+                error:
+                    "Non-valid data format. 'data' must be an object with a non-empty 'products' array.",
             });
         }
 
         if (!data.userId) {
-            console.warn("[PUT /orders] Missing userId in data for inventory record.");
+            console.warn(
+                "[PUT /orders] Missing userId in data for inventory record."
+            );
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({
@@ -81,11 +88,13 @@ const putOrders = async (req, res) => {
         }
 
         for (const element of data.products) {
-            const product = await productsModel.findById(element._id).session(session); 
+            const product = await productsModel
+                .findById(element._id)
+                .session(session);
 
             if (!product) {
                 console.warn(`[PUT /orders] Product not found: ${element._id}`);
-                await session.abortTransaction(); 
+                await session.abortTransaction();
                 session.endSession();
                 return res.status(404).json({
                     success: false,
@@ -94,45 +103,48 @@ const putOrders = async (req, res) => {
             }
 
             if (product.stock < element.quantity) {
-                console.warn(`[PUT /orders] Insufficient stock for product: ${element._id}`);
-                await session.abortTransaction(); 
+                console.warn(
+                    `[PUT /orders] Insufficient stock for product: ${element._id}`
+                );
+                await session.abortTransaction();
                 session.endSession();
                 return res.status(400).json({
                     success: false,
-                    error: `Insufficient stock for product ${product.name || element._id}. Required: ${element.quantity}, Available: ${product.stock}.`,
+                    error: `Insufficient stock for product ${product.name || element._id
+                        }. Required: ${element.quantity}, Available: ${product.stock}.`,
                 });
             }
 
-         
             await productsModel.findByIdAndUpdate(
                 element._id,
                 { $inc: { stock: -element.quantity } },
-                { new: true, runValidators: true, session } 
+                { new: true, runValidators: true, session }
             );
             console.log(`Updated product ${element._id} stock.`);
 
             const inventoryRecord = new inventoryModel({
                 productId: element._id,
-                type: 'outbound', 
+                type: "outbound",
                 quantity: element.quantity,
                 userId: data.userId,
-                orderId: id, 
-                reason: data.reason || 'Order Fulfillment' 
+                orderId: id,
+                reason: data.reason || "Order Fulfillment",
             });
-            await inventoryRecord.save({ session }); 
-            console.log(`Inventory record created for product ${element._id} related to order ${id}`);
+            await inventoryRecord.save({ session });
+            console.log(
+                `Inventory record created for product ${element._id} related to order ${id}`
+            );
         }
 
-    
         const updateOrder = await ordersModel.findByIdAndUpdate(
             id,
-            { $set: data }, 
+            { $set: data },
             { new: true, runValidators: true, lean: true, session }
         );
 
         if (!updateOrder) {
             console.warn(`[PUT /orders] Order data not found with ID: ${id}`);
-            await session.abortTransaction(); 
+            await session.abortTransaction();
             session.endSession();
             return res.status(404).json({
                 success: false,
@@ -140,8 +152,9 @@ const putOrders = async (req, res) => {
                 message: `No order data was found with the ID: ${id}`,
                 details: {
                     providedId: id,
-                    suggestion: "Verify the ID or check if the order was previously deleted"
-                }
+                    suggestion:
+                        "Verify the ID or check if the order was previously deleted",
+                },
             });
         }
 
@@ -153,16 +166,15 @@ const putOrders = async (req, res) => {
             message: "Order and inventory updated successfully.",
             data: updateOrder,
         });
-
     } catch (error) {
         await session.abortTransaction();
-        session.endSession(); 
+        session.endSession();
 
         console.error("[PUT /orders] Order update and inventory process failed", {
             message: error.message,
             stack: error.stack,
             dataReceived: req.body.data,
-            orderId: req.params.id
+            orderId: req.params.id,
         });
 
         if (error.name === "ValidationError") {
@@ -181,7 +193,6 @@ const putOrders = async (req, res) => {
     }
 };
 
-
 const getOrdersById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -189,15 +200,15 @@ const getOrdersById = async (req, res) => {
             console.warn(`[GET order] invalid id format : ${id}`);
             return res.status(400).json({ error: "Invalid ID format" });
         }
-        const order = await ordersModel.find({userId:id}).populate('userId');
+        const order = await ordersModel.find({ userId: id }).populate("userId");
         if (!order) {
             console.warn(`[GET order] order with ID: ${id} not found`);
             return res.status(404).json({ error: "order not found" });
         }
-        return res.status(200).json({ 
-            success:true,
-            count:order.length,
-            data:order
+        return res.status(200).json({
+            success: true,
+            count: order.length,
+            data: order,
         });
     } catch (error) {
         console.error(`[GET order] Critical error : ${error.message}`, error.stack);
@@ -205,20 +216,51 @@ const getOrdersById = async (req, res) => {
     }
 };
 
-
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await ordersModel.find().select("-__v");
+        const orders = await ordersModel.find().select("-__v -products.reviews -products.categoryId").populate('userId');
 
         if (orders.length === 0) {
             console.warn("[GET /orders] No orders found");
             return res.status(200).json({ data: [] });
         }
 
+        const totalIncome = orders.reduce((acc, elemento, index) => {
+            const totalOrder = elemento.products.reduce((acc, elemento, index) => {
+                return acc + elemento.total;
+            }, 0);
+            return acc + totalOrder;
+        }, 0);
+
+        const today = new Date();
+        const startOfTodayUTC = new Date(Date.UTC(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            0, 0, 0, 0
+        ));
+
+        const startOfTomorrowUTC = new Date(Date.UTC(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() + 1,
+            0, 0, 0, 0
+        ));
+
+        const salesToday = await ordersModel.find({
+            createdAt: {
+                $gte: startOfTodayUTC,
+                $lt: startOfTomorrowUTC
+            }
+        });
+
+
         return res.status(200).json({
             success: true,
             count: orders.length,
-            data:orders,
+            totalIncome: totalIncome,
+            salesToday: salesToday.length,
+            data: orders,
         });
     } catch (error) {
         console.error("[GET /orders] Critical error:", {
@@ -231,8 +273,6 @@ const getAllOrders = async (req, res) => {
         });
     }
 };
-
-
 
 const putState = async (req, res) => {
     try {
@@ -263,29 +303,43 @@ const putState = async (req, res) => {
     }
 };
 
-
 const getConvertPesosToDollars = async (req, res) => {
     try {
         // Recibe el descuento y los ítems del cuerpo de la solicitud (POST)
-        const { discount, items } = req.body; 
+        const { discount, items } = req.body;
 
         // Validar que discount sea un número y items un array
-        if (typeof discount !== 'number' || isNaN(discount) || !Array.isArray(items)) {
-            return res.status(400).json({ success: false, error: 'Invalid input: discount must be a number and items must be an array.' });
+        if (
+            typeof discount !== "number" ||
+            isNaN(discount) ||
+            !Array.isArray(items)
+        ) {
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    error:
+                        "Invalid input: discount must be a number and items must be an array.",
+                });
         }
 
         const currentDollarValue = 3900;
 
         // 1. Calcular el subTotal en COP directamente desde los ITEMS recibidos
         let calculatedSubTotalCOP = 0;
-        items.forEach(item => {
+        items.forEach((item) => {
             // Asegúrate de que item.price y item.quantity son números
-            calculatedSubTotalCOP += (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0); 
+            calculatedSubTotalCOP +=
+                (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
         });
 
         // 2. Convertir todos los valores a USD y luego a CENTAVOS de USD (enteros)
-        const dollarDiscountCents = Math.round((discount / currentDollarValue) * 100);
-        const subTotalInDollarsCents = Math.round((calculatedSubTotalCOP / currentDollarValue) * 100);
+        const dollarDiscountCents = Math.round(
+            (discount / currentDollarValue) * 100
+        );
+        const subTotalInDollarsCents = Math.round(
+            (calculatedSubTotalCOP / currentDollarValue) * 100
+        );
         const amountCents = subTotalInDollarsCents - dollarDiscountCents;
 
         // 3. Formatear los valores de CENTAVOS a DÓLARES (con decimales) y como STRING con 2 decimales
@@ -294,15 +348,17 @@ const getConvertPesosToDollars = async (req, res) => {
         const amountFormatted = (amountCents / 100).toFixed(2);
 
         // 4. Convertir y formatear los ítems individuales a USD con 2 decimales
-        const itemsInDollarsFormatted = items.map(product => {
-            const unitPriceCents = Math.round(((parseFloat(product.price) || 0) / currentDollarValue) * 100);
+        const itemsInDollarsFormatted = items.map((product) => {
+            const unitPriceCents = Math.round(
+                ((parseFloat(product.price) || 0) / currentDollarValue) * 100
+            );
             return {
                 name: product.name,
                 unit_amount: {
                     value: (unitPriceCents / 100).toFixed(2),
-                    currency_code: 'USD'
+                    currency_code: "USD",
                 },
-                quantity: (parseInt(product.quantity) || 0).toString() // Cantidad como string
+                quantity: (parseInt(product.quantity) || 0).toString(), // Cantidad como string
             };
         });
 
@@ -312,14 +368,26 @@ const getConvertPesosToDollars = async (req, res) => {
                 subTotal: subTotalFormatted,
                 discount: discountFormatted,
                 amount: amountFormatted,
-                items: itemsInDollarsFormatted // Devolvemos los ítems ya convertidos
-            }
+                items: itemsInDollarsFormatted, // Devolvemos los ítems ya convertidos
+            },
         });
-
     } catch (error) {
-        console.error('[GET /convertCurrency]', error);
-        return res.status(400).json({ success: false, error: 'The conversion could not be performed', details: error.message });
+        console.error("[GET /convertCurrency]", error);
+        return res
+            .status(400)
+            .json({
+                success: false,
+                error: "The conversion could not be performed",
+                details: error.message,
+            });
     }
 };
 
-export {postOrders, putOrders, getOrdersById, getAllOrders, putState , getConvertPesosToDollars}
+export {
+    postOrders,
+    putOrders,
+    getOrdersById,
+    getAllOrders,
+    putState,
+    getConvertPesosToDollars,
+};
