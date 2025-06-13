@@ -82,10 +82,6 @@ export async function generateInvoicePdf(invoiceData){
             }
         });
 
-        const debugPdfPath = path.join(process.cwd(), 'debug_invoice.pdf');
-            await fs.writeFile(debugPdfPath, pdfBuffer);
-            console.log(`[PDF Service] PDF de depuración guardado en: ${debugPdfPath}`);
-
         return pdfBuffer;
 
     } catch (error) {
