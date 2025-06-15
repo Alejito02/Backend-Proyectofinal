@@ -306,6 +306,7 @@ const putState = async (req, res) => {
 const getConvertPesosToDollars = async (req, res) => {
     try {
         // Recibe el descuento y los ítems del cuerpo de la solicitud (POST)
+        // Asegúrate de que el 'price' de los ítems y 'discount' sean los valores originales en COP (Pesos Colombianos)
         const { discount, items } = req.body;
 
         // Validar que discount sea un número y items un array
@@ -323,52 +324,69 @@ const getConvertPesosToDollars = async (req, res) => {
                 });
         }
 
-        const currentDollarValue = 3900;
+        // Valor actual del dólar (COP por 1 USD)
+        // Usar un valor con más precisión podría ayudar a reducir errores de redondeo,
+        // pero el problema principal es la consistencia en el redondeo final.
+        const currentDollarValue = 4.123; // Asumimos esta tasa de conversión
 
-        // 1. Calcular el subTotal en COP directamente desde los ITEMS recibidos
-        let calculatedSubTotalCOP = 0;
-        items.forEach((item) => {
-            // Asegúrate de que item.price y item.quantity son números
-            calculatedSubTotalCOP +=
-                (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
-        });
-
-        // 2. Convertir todos los valores a USD y luego a CENTAVOS de USD (enteros)
-        const dollarDiscountCents = Math.round(
-            (discount / currentDollarValue) * 100
-        );
-        const subTotalInDollarsCents = Math.round(
-            (calculatedSubTotalCOP / currentDollarValue) * 100
-        );
-        const amountCents = subTotalInDollarsCents - dollarDiscountCents;
-
-        // 3. Formatear los valores de CENTAVOS a DÓLARES (con decimales) y como STRING con 2 decimales
-        const subTotalFormatted = (subTotalInDollarsCents / 100).toFixed(2);
-        const discountFormatted = (dollarDiscountCents / 100).toFixed(2);
-        const amountFormatted = (amountCents / 100).toFixed(2);
-
-        // 4. Convertir y formatear los ítems individuales a USD con 2 decimales
+        // 1. Convertir y formatear los ítems individuales a USD con 2 decimales
+        // ESTA SERÁ LA FUENTE DE LA VERDAD PARA EL 'item_total'
         const itemsInDollarsFormatted = items.map((product) => {
-            const unitPriceCents = Math.round(
-                ((parseFloat(product.price) || 0) / currentDollarValue) * 100
+            // Asegúrate de que item.price es un número para la división
+            const originalPriceCOP = parseFloat(product.price) || 0;
+            const originalQuantity = parseInt(product.quantity, 10) || 0; // Base 10 for parseInt
+
+            // Convertir precio unitario a dólares y luego a centavos, y redondear
+            const unitPriceInCents = Math.round(
+                (originalPriceCOP / currentDollarValue) * 100
             );
+
             return {
                 name: product.name,
                 unit_amount: {
-                    value: (unitPriceCents / 100).toFixed(2),
+                    // Convertir centavos de nuevo a dólares con 2 decimales y como String
+                    value: (unitPriceInCents / 100).toFixed(2),
                     currency_code: "USD",
                 },
-                quantity: (parseInt(product.quantity) || 0).toString(), // Cantidad como string
+                // La cantidad debe ser un String según la API de PayPal
+                quantity: originalQuantity.toString(),
             };
         });
+
+        // 2. Calcular el subTotal en USD sumando los valores formateados de los ítems
+        // Esto GARANTIZA que el 'item_total' sea EXACTAMENTE la suma de los 'items'
+        let calculatedSubTotalUSD = 0;
+        itemsInDollarsFormatted.forEach((item) => {
+            // Usa parseFloat para sumar los valores ya redondeados a 2 decimales
+            calculatedSubTotalUSD +=
+                parseFloat(item.unit_amount.value) * parseInt(item.quantity, 10);
+        });
+
+        // Asegúrate de que el subtotal final tenga 2 decimales y sea un string
+        const subTotalFormatted = calculatedSubTotalUSD.toFixed(2);
+
+
+        // 3. Convertir el descuento a USD, redondear a centavos y luego formatear a 2 decimales
+        const originalDiscountCOP = parseFloat(discount) || 0;
+        const discountInCents = Math.round(
+            (originalDiscountCOP / currentDollarValue) * 100
+        );
+        const discountFormatted = (discountInCents / 100).toFixed(2);
+
+        // 4. Calcular el monto total final (amount) a partir del subTotal formateado y el descuento formateado
+        // Asegúrate de que se realice la operación numérica antes de toFixed
+        const finalAmountUSD = parseFloat(subTotalFormatted) - parseFloat(discountFormatted);
+        const amountFormatted = finalAmountUSD.toFixed(2);
+
 
         return res.status(200).json({
             success: true,
             data: {
-                subTotal: subTotalFormatted,
+                // Ahora, estos valores serán consistentes entre sí
+                subTotal: subTotalFormatted, // Este es el item_total para PayPal
                 discount: discountFormatted,
-                amount: amountFormatted,
-                items: itemsInDollarsFormatted, // Devolvemos los ítems ya convertidos
+                amount: amountFormatted,     // Este es el monto total para PayPal
+                items: itemsInDollarsFormatted, // Estos son los ítems individuales
             },
         });
     } catch (error) {
