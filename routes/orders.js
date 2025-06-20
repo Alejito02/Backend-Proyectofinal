@@ -10,7 +10,7 @@ router.post('/convertCurrency', getConvertPesosToDollars)
 
 
 router.post ("/",[
-/*     validateToken, */
+    validateToken,
     orderValidations,
     validateFields
 ], postOrders);
