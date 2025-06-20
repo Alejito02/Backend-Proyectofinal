@@ -5,7 +5,7 @@ import { userValidations } from "../middlewares/validations.js";
 import { validateFields } from "../middlewares/validateFields.js";
 import { validateToken } from "../middlewares/validateToken.js";
 
-
+const comodin = 'orita lo borro'
 router.post("/login",login)
 
 router.post("/",[
