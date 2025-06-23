@@ -144,7 +144,7 @@ const getProductById = async (req, res) => {
 const getAllProducts = async (req, res) => {
     try {
         const products = await productsModel
-            .find()
+            .find({state:1})
             .select("-__v")
             .populate(["reviews.userId", "categoryId"]);
 
@@ -168,6 +168,7 @@ const getAllProducts = async (req, res) => {
 
         return res.status(200).json({
             success: true,
+            type:'actives',
             count: products.length,
             stock: stock,
             data: products,
@@ -450,6 +451,36 @@ const getProductsOnOffer = async (req, res) => {
     }
 };
 
+const loadDeactivatedProducts = async (req, res) => {
+    try {
+        const products = await productsModel.find({ state: 0 });
+        if (!products || products.length === 0) {
+            console.warn('[GET /products/deactivated] No se encontraron productos desactivados.');
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                message: "No hay productos desactivados.",
+                products: [] 
+            });
+        }
+    
+        return res.status(200).json({
+            success: true,
+            type:'inactives',
+            count: products.length,
+            data: products
+        });
+
+    } catch (error) {
+        console.error('[GET /products/deactivated] Error loading disabled products:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error while trying to load disabled products.",
+            error: error.message 
+        });
+    }
+};
+
 export {
     postProduct,
     putProduct,
@@ -458,5 +489,6 @@ export {
     putState,
     addReviewToProduct,
     productSearch,
-    getProductsOnOffer
+    getProductsOnOffer,
+    loadDeactivatedProducts
 };
