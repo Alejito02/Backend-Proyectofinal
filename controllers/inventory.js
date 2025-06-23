@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 const postInventory = async (req, res) => {
     try {
-        const {data} = req.body;
+        const { data } = req.body;
 
         if (!data || typeof data !== "object") {
             console.warn("[POST /inventory] invalid inventory data format", { data });
@@ -73,9 +73,10 @@ const putInventory = async (req, res) => {
                 message: `No inventory data was found with the ID: ${id}`,
                 details: {
                     providedId: id,
-                    suggestion: "Verify the ID or check if the item was previously deleted"
-                }
-            })
+                    suggestion:
+                        "Verify the ID or check if the item was previously deleted",
+                },
+            });
         }
 
         res.status(200).json({
@@ -102,38 +103,55 @@ const putInventory = async (req, res) => {
     }
 };
 
-
 const getInventoryByType = async (req, res) => {
     try {
-        const { type } = req.query
-        const validTypes = ["entrada", "salida", "devolucion"];
+        const inventory = await inventoryModel.find().lean().populate({
+            path: "productId",
+            select: "-reviews",
+        }).populate('userId');
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Establece la hora a las 00:00:00 para comparar solo la fecha
 
+        const outbounds = inventory.filter(
+            (movement) => movement.type === "outbound"
+        );
+        const incomings = inventory.filter(
+            (movement) => movement.type === "incoming"
+        );
 
-        if (!type ||  !validTypes.includes(type)) {
-            console.warn('Invalid type')
-            return res.status(400).json({
-                success: false,
-                error: `Invalid type. Allowed values: ${validTypes.join(", ")}`
-            });
-        };
+        // Filtra los movimientos de hoy
+        const todayOutbounds = outbounds.filter((movement) => {
+            const movementDate = new Date(movement.date);
+            return movementDate >= today;
+        });
 
-        const inventory = await inventoryModel.find({ type }).lean()
+        const todayIncomings = incomings.filter((movement) => {
+            const movementDate = new Date(movement.date);
+            return movementDate >= today;
+        });
 
         if (inventory.length === 0) {
-            console.warn('Empty data')
+            console.warn("Empty data");
             return res.status(200).json({
                 success: true,
-                data: []
-            })
-        };
+                data: [],
+            });
+        }
 
         res.status(200).json({
             success: true,
-            count: inventory.length,
-            data: inventory
-        })
-
+            data: {
+                outboundsCount: outbounds.length,
+                incomingsCount: incomings.length,
+                count: inventory.length,
+                outbounds: outbounds,
+                incomings: incomings,
+                movementsToday: todayOutbounds.length + todayIncomings.length,
+                todayOutboundsCount: todayOutbounds.length, // Conteo de salidas de hoy
+                todayIncomingsCount: todayIncomings.length, // Conteo de entradas de hoy
+            },
+        });
     } catch (error) {
         console.error("[GET /Inventory] The operation fails", {
             message: error.message,
@@ -144,11 +162,8 @@ const getInventoryByType = async (req, res) => {
             success: false,
             error: "Internal server error",
         });
-
     }
-}
-
-
+};
 
 const getAllInventory = async (req, res) => {
     try {
@@ -177,4 +192,4 @@ const getAllInventory = async (req, res) => {
     }
 };
 
-export { postInventory, putInventory,getInventoryByType, getAllInventory };
+export { postInventory, putInventory, getInventoryByType, getAllInventory };
