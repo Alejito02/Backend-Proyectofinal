@@ -1,4 +1,5 @@
 import productsModel from "../models/products.js";
+import inventoryModel from "../models/inventory.js";
 import mongoose from "mongoose";
 
 const postProduct = async (req, res) => {
@@ -28,6 +29,15 @@ const postProduct = async (req, res) => {
 
         const product = new productsModel(data);
         await product.save();
+
+        const inventoryRecord = new inventoryModel({
+            productId: product._id,
+            type: "inbound",
+            quantity: product.stock,
+            userId: data.adminId,
+            reason: data.reason || "Registro de nuevo producto",
+        });
+        await inventoryRecord.save();
 
         const productResponse = product.toObject();
         return res.status(200).json({
@@ -144,7 +154,7 @@ const getProductById = async (req, res) => {
 const getAllProducts = async (req, res) => {
     try {
         const products = await productsModel
-            .find({state:1})
+            .find({ state: 1 })
             .select("-__v")
             .populate(["reviews.userId", "categoryId"]);
 
@@ -168,7 +178,7 @@ const getAllProducts = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            type:'actives',
+            type: "actives",
             count: products.length,
             stock: stock,
             data: products,
@@ -397,25 +407,23 @@ const productSearch = async (req, res) => {
         });
     } catch (error) {
         console.error("[GET /search] Error searching for products:", error);
-        return res
-            .status(500)
-            .json({
-                success: false,
-                error: "Internal server error while searching for products.",
-            });
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error while searching for products.",
+        });
     }
 };
 
 const getProductsOnOffer = async (req, res) => {
     try {
         const now = new Date();
-        const todayFormatted = now.toISOString().split('T')[0];
+        const todayFormatted = now.toISOString().split("T")[0];
 
         const products = await productsModel
             .find({
                 offer: 1,
-                'offerDateRange.from': { $lte: todayFormatted },
-                'offerDateRange.to': { $gte: todayFormatted },
+                "offerDateRange.from": { $lte: todayFormatted },
+                "offerDateRange.to": { $gte: todayFormatted },
             })
             .lean();
 
@@ -455,28 +463,32 @@ const loadDeactivatedProducts = async (req, res) => {
     try {
         const products = await productsModel.find({ state: 0 });
         if (!products || products.length === 0) {
-            console.warn('[GET /products/deactivated] No se encontraron productos desactivados.');
+            console.warn(
+                "[GET /products/deactivated] No se encontraron productos desactivados."
+            );
             return res.status(200).json({
                 success: true,
                 count: 0,
                 message: "No hay productos desactivados.",
-                products: [] 
+                products: [],
             });
         }
-    
+
         return res.status(200).json({
             success: true,
-            type:'inactives',
+            type: "inactives",
             count: products.length,
-            data: products
+            data: products,
         });
-
     } catch (error) {
-        console.error('[GET /products/deactivated] Error loading disabled products:', error);
+        console.error(
+            "[GET /products/deactivated] Error loading disabled products:",
+            error
+        );
         return res.status(500).json({
             success: false,
             message: "Internal server error while trying to load disabled products.",
-            error: error.message 
+            error: error.message,
         });
     }
 };
@@ -490,5 +502,5 @@ export {
     addReviewToProduct,
     productSearch,
     getProductsOnOffer,
-    loadDeactivatedProducts
+    loadDeactivatedProducts,
 };

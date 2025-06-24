@@ -6,7 +6,7 @@ const inventorySchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     date: { type: Date, default: Date.now },
     userId: { type: mongoose.Schema.ObjectId, required: true, ref: "users" },
-    orderId:{ type: mongoose.Schema.ObjectId, required: true, ref: "orders" },
+    orderId:{ type: mongoose.Schema.ObjectId,  ref: "orders" },
     reason: { type: String } // Opcional
 }, {
     timestamps: true

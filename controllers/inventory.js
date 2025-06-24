@@ -117,7 +117,7 @@ const getInventoryByType = async (req, res) => {
             (movement) => movement.type === "outbound"
         );
         const incomings = inventory.filter(
-            (movement) => movement.type === "incoming"
+            (movement) => movement.type === "inbound"
         );
 
         // Filtra los movimientos de hoy
