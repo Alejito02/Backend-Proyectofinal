@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer'; // <-- CAMBIO AQUÍ: ¡Vuelve a usar 'puppeteer'!
 import ejs from 'ejs';
 import path from 'path';
 import fs from 'fs/promises';
@@ -40,7 +40,7 @@ export async function generateInvoicePdf(invoiceData){
     let browser;
     try {
         console.log("datos de factura", invoiceData);
-        const templatePath = path.join(process.cwd(), 'templates', 'invoice.ejs'); 
+        const templatePath = path.join(process.cwd(), 'templates', 'invoice.ejs');
         const templateContent = await fs.readFile(templatePath, 'utf8');
 
         const htmlContent = ejs.render(templateContent, {
@@ -50,30 +50,33 @@ export async function generateInvoicePdf(invoiceData){
             getStatusText: getStatusText
         });
         console.log("htmlContent" , htmlContent);
-        
 
-        // Lanzar Puppeteer
-        browser = await puppeteer.launch({
-            headless: 'new', 
+        // Configuración de las opciones de lanzamiento de Puppeteer
+        let launchOptions = {
+            headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-gpu',
-                '--disable-dev-shm-usage' 
+                '--disable-dev-shm-usage'
             ]
-        });
+        };
+
+        if (process.env.NODE_ENV === 'production' || process.env.PUPPETEER_EXECUTABLE_PATH) {
+    
+            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/opt/render/.cache/puppeteer/chrome/linux-137.0.7151.119/chrome-linux64/chrome';
+        }
+        browser = await puppeteer.launch(launchOptions);
         const page = await browser.newPage();
 
-    
         await page.setContent(htmlContent, {
-            waitUntil: 'domcontentloaded', 
-            timeout: 60000 
+            waitUntil: 'domcontentloaded',
+            timeout: 60000
         });
-
 
         const pdfBuffer = await page.pdf({
             format: 'A4',
-            printBackground: true, 
+            printBackground: true,
             margin: {
                 top: '20mm',
                 right: '20mm',
@@ -89,7 +92,7 @@ export async function generateInvoicePdf(invoiceData){
         throw new Error(`No se pudo generar el PDF de la factura: ${error.message}`);
     } finally {
         if (browser) {
-            await browser.close(); // Siempre cierra el navegador para liberar recursos
+            await browser.close();
         }
     }
 }
