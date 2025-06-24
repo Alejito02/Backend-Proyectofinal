@@ -1,4 +1,27 @@
-import puppeteer from 'puppeteer'; // <-- CAMBIO AQUÍ: ¡Vuelve a usar 'puppeteer'!
+// services/invoicePdf.js
+
+// Importaciones dinámicas para Puppeteer y Chromium
+let puppeteer;
+let chromium;
+
+// Determinamos qué módulo importar en tiempo de ejecución
+// Esto permite que el paquete 'puppeteer' (completo) maneje la descarga en local
+// y '@sparticuz/chromium' en producción (Render)
+if (process.env.NODE_ENV === 'production') {
+    // En producción (Render), usamos puppeteer-core y @sparticuz/chromium
+    // Usamos 'await import()' para que sean cargados solo si es necesario
+    const puppeteerCoreModule = await import('puppeteer-core');
+    const chromiumModule = await import('@sparticuz/chromium');
+    puppeteer = puppeteerCoreModule.default;
+    chromium = chromiumModule.default;
+} else {
+    // En desarrollo local, usamos el paquete completo de puppeteer
+    // Este paquete es capaz de autodescargar y encontrar el navegador
+    const puppeteerModule = await import('puppeteer');
+    puppeteer = puppeteerModule.default;
+}
+
+
 import ejs from 'ejs';
 import path from 'path';
 import fs from 'fs/promises';
@@ -51,21 +74,31 @@ export async function generateInvoicePdf(invoiceData){
         });
         console.log("htmlContent" , htmlContent);
 
-        // Configuración de las opciones de lanzamiento de Puppeteer
+        // Opciones base para Puppeteer
         let launchOptions = {
-            headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-gpu',
                 '--disable-dev-shm-usage'
-            ]
+            ],
+            headless: 'new' // Puedes dejarlo fijo en 'new' o 'true' para ambos entornos
         };
 
-        if (process.env.NODE_ENV === 'production' || process.env.PUPPETEER_EXECUTABLE_PATH) {
-    
-            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/opt/render/.cache/puppeteer/chrome/linux-137.0.7151.119/chrome-linux64/chrome';
+        // Ajustar opciones si estamos en producción (Render)
+        if (process.env.NODE_ENV === 'production') {
+            // Usamos las propiedades de @sparticuz/chromium
+            launchOptions.args = chromium.args;
+            launchOptions.defaultViewport = chromium.defaultViewport;
+            launchOptions.headless = chromium.headless;
+            launchOptions.executablePath = await chromium.executablePath();
+        } else {
+            // En desarrollo local, el paquete 'puppeteer' (completo) se encargará de encontrar
+            // o descargar el navegador. No necesitamos especificar 'executablePath'.
+            // Los 'args' ya están definidos en 'launchOptions' para ambos casos.
         }
+
+        // Lanzar Puppeteer
         browser = await puppeteer.launch(launchOptions);
         const page = await browser.newPage();
 
